@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: 3
+tasks:
+  test:
+    silent: true
+    desc: Reproduce issue
+    cmds:
+        # Works
+      - |
+        echo "hi pipe" | while read -r line; do
+            echo "$line"
+        done
+        echo "done pipe"
+
+        # Hangs
+      - |
+        while read -r line; do
+            echo "$line"
+        done < <(echo "hi file substitution")
+        echo "done file substitution"
+
+        # Hangs
+      - |
+        echo "hi file" > hi.txt
+
+        while read -r line; do
+            echo "$line"
+        done < hi.txt
+
+        echo "done file"
+
+
+  clean:
+    desc: Clean files
+    cmds:
+      - |
+        rm hi.txt

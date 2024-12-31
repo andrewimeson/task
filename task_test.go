@@ -2667,6 +2667,31 @@ func TestPOSIXShellOptsGlobalLevel(t *testing.T) {
 	assert.Equal(t, "pipefail\ton\n", buff.String())
 }
 
+func TestAndrewIssue(t *testing.T) {
+	t.Parallel()
+
+	var buff bytes.Buffer
+	e := task.Executor{
+		Dir:    "testdata/while_hang",
+		Stdout: &buff,
+		Stderr: &buff,
+	}
+	require.NoError(t, e.Setup())
+
+	// Create a new context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel() // ensure the context is cancelled when we are done
+
+	err := e.Run(ctx, &ast.Call{Task: "test"})
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			t.Fatalf("Test failed due to timeout")
+		}
+		require.NoError(t, err)
+	}
+	assert.Equal(t, "hi pipe\ndone pipe\nhi file substitution\ndone file substitution\nhi file\ndone file\n", buff.String())
+}
+
 func TestPOSIXShellOptsTaskLevel(t *testing.T) {
 	t.Parallel()
 
